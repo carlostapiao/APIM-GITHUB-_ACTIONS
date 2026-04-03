@@ -87,6 +87,12 @@ resource "azurerm_api_management" "apim" {
   publisher_name      = "Carlos Tapia"
   publisher_email     = "carlos@example.com"
   sku_name            = "Consumption_0"
+
+  # Agrega esto para no esperar una eternidad si Azure se traba
+  timeouts {
+    create = "25m"
+    delete = "25m"
+  }
 }
 
 resource "azurerm_api_management_api" "api" {
