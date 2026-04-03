@@ -86,7 +86,7 @@ resource "azurerm_api_management" "apim" {
   resource_group_name = azurerm_resource_group.rg.name
   publisher_name      = "Carlos Tapia"
   publisher_email     = "carlos@example.com"
-  sku_name            = "Consumption_1"
+  sku_name            = "Consumption_0"
 }
 
 resource "azurerm_api_management_api" "api" {

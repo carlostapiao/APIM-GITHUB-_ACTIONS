@@ -16,18 +16,20 @@ jobs:
       ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
       # Pass de SQL para Terraform
       TF_VAR_db_password: ${{ secrets.DB_PASSWORD }}
+      # Forzar el uso de Node 24 para evitar warnings de deprecación
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4 # Actualizado de v3 a v4
 
       - name: Azure Login
-        uses: azure/login@v1
+        uses: azure/login@v2 # Actualizado de v1 a v2
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
       - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v2
+        uses: hashicorp/setup-terraform@v3 # Actualizado de v2 a v3
         with:
           terraform_version: 1.5.0
 
@@ -43,12 +45,14 @@ jobs:
           username: ${{ secrets.AZURE_CLIENT_ID }}
           password: ${{ secrets.AZURE_CLIENT_SECRET }}
 
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3 # Actualizado a v3
+
       - name: Build & Push App
-        uses: docker/build-push-action@v4
+        uses: docker/build-push-action@v5 # Actualizado a v5
         with:
           context: ./app
           push: true
-          # Usamos github.sha para que cada despliegue sea único e inmutable
           tags: acrcarlos69lm.azurecr.io/support-app:${{ github.sha }}
 
       - name: Get AKS Context
@@ -57,25 +61,23 @@ jobs:
 
       - name: Kubernetes Deploy
         run: |
-          # REGLA DE ORO: El sed debe coincidir exactamente con lo que escribimos en k8s/deployment.yaml
-          # Buscamos la imagen genérica y ponemos la del commit actual
+          # 1. Inyectar el tag de imagen dinámico
           sed -i 's|acrcarlos69lm.azurecr.io/support-app:latest|acrcarlos69lm.azurecr.io/support-app:${{ github.sha }}|g' k8s/deployment.yaml
           
-          # Inyectamos el password real en las variables de entorno del contenedor
+          # 2. Inyectar la contraseña real de la DB
           sed -i 's|TuPasswordSeguro123|${{ secrets.DB_PASSWORD }}|g' k8s/deployment.yaml
 
           kubectl apply -f k8s/
           
-          # Esperamos a que el pod esté listo antes de seguir con APIM
+          # 3. Verificar despliegue
           kubectl rollout status deployment/support-app --timeout=180s
 
-      - name: Update APIM Backend
+      - name: Sync NGINX IP with APIM
         run: |
-          echo "Obteniendo IP de NGINX en namespace ingress-basic..."
+          echo "Buscando IP del controlador NGINX..."
           NGINX_IP=""
           
           for i in {1..20}; do
-            # El nombre 'ingress-nginx-controller' es el estándar de Helm
             NGINX_IP=$(kubectl get svc -n ingress-basic ingress-nginx-controller -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
             if [ -n "$NGINX_IP" ]; then break; fi
             echo "Esperando IP... ($i)"
@@ -83,18 +85,17 @@ jobs:
           done
 
           if [ -z "$NGINX_IP" ]; then 
-            echo "Error: No se obtuvo IP pública."
+            echo "Error: No se obtuvo IP pública del Ingress."
             exit 1 
           fi
 
           echo "IP Detectada: $NGINX_IP"
 
-          # Comando final para conectar APIM con el Ingress del AKS
-          # Usamos los nombres exactos de tus parámetros
+          # Actualizar el Backend de APIM
           az apim api update \
             --resource-group rg-k8s-lab \
             --service-name apimcarlos69lm \
             --api-id tickets-api \
             --service-url "http://$NGINX_IP"
           
-          echo "Laboratorio 21 de Carlos Tapia completado con éxito."
+          echo "Despliegue de Carlos Tapia completado con éxito."
