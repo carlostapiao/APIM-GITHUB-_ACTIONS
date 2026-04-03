@@ -7,7 +7,7 @@ terraform {
     resource_group_name  = "rg-apppersonal-tfstate"
     storage_account_name = "stcarlosv3state"
     container_name       = "tfstate-apppersonal"
-    key                  = "tfstate.v3"
+    key                  = "tfstate.v4"
   }
 }
 
