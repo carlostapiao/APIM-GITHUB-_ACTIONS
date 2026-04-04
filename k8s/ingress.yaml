@@ -4,14 +4,13 @@ metadata:
   name: support-ingress
   annotations:
     kubernetes.io/ingress.class: "nginx"
-    # Permite que el tráfico que llega a la raíz se redirija correctamente
+    # Redirige el tráfico correctamente al backend
     nginx.ingress.kubernetes.io/rewrite-target: /
-    # Ayuda a que las rutas relativas de CSS/JS se resuelvan con la URL base
+    # Ayuda con las rutas relativas de CSS/JS
     nginx.ingress.kubernetes.io/add-base-url: "true"
-    # Evita problemas de redirección infinita de barras inclinadas (trailing slashes)
-    nginx.ingress.kubernetes.io/configuration-snippet: |
-      server_tokens off;
-      proxy_hide_header X-Powered-By;
+    # Opcional: Aumentar el tiempo de espera si la DB tarda en responder
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "60"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "60"
 spec:
   rules:
   - http:
