@@ -105,24 +105,37 @@ resource "azurerm_api_management_api" "api" {
   protocols           = ["http", "https"]
 }
 
+# 1. ESTA ES LA CLAVE: Captura TODO (HTML, CSS, JS)
+resource "azurerm_api_management_api_operation" "wildcard" {
+  operation_id        = "all-content"
+  api_name            = azurerm_api_management_api.api.name
+  api_management_name = azurerm_api_management.apim.name
+  resource_group_name = azurerm_resource_group.rg.name
+  display_name        = "Todo el contenido"
+  method              = "GET"
+  url_template        = "/*" # El asterisco permite que /style.css y /script.js pasen
+}
+
+# 2. Específico para la API de lectura
 resource "azurerm_api_management_api_operation" "get_tickets" {
-  operation_id        = "get-tickets"
+  operation_id        = "get-tickets-api"
   api_name            = azurerm_api_management_api.api.name
   api_management_name = azurerm_api_management.apim.name
   resource_group_name = azurerm_resource_group.rg.name
   display_name        = "Get All Tickets"
   method              = "GET"
-  url_template        = "/"
+  url_template        = "/api/tickets" # Ruta exacta para los datos
 }
 
+# 3. Específico para crear tickets
 resource "azurerm_api_management_api_operation" "post_ticket" {
-  operation_id        = "create-ticket"
+  operation_id        = "create-ticket-api"
   api_name            = azurerm_api_management_api.api.name
   api_management_name = azurerm_api_management.apim.name
   resource_group_name = azurerm_resource_group.rg.name
   display_name        = "Create Ticket"
   method              = "POST"
-  url_template        = "/"
+  url_template        = "/api/tickets" # Ruta exacta para el guardado
 }
 
 # --- 7. Helm Ingress Nginx ---
