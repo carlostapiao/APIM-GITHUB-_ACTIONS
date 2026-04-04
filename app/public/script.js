@@ -2,12 +2,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const ticketForm = document.getElementById('ticketForm');
     const tableBody = document.getElementById('ticketTableBody');
 
-    // Función para cargar tickets con ruta RELATIVA
+    // Función para obtener tickets
     const fetchTickets = async () => {
         try {
-            // Cambio clave: ./api/tickets en lugar de /api/tickets
-            const res = await fetch('./api/tickets');
-            if (!res.ok) throw new Error('Error al obtener tickets');
+            // Gracias al tag <base>, esto apunta a /tickets/api/tickets
+            const res = await fetch('api/tickets');
+            if (!res.ok) throw new Error('Error en la respuesta del servidor');
             
             const tickets = await res.json();
             tableBody.innerHTML = '';
@@ -24,11 +24,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 `;
             });
         } catch (err) {
-            console.error("Error en el frontend:", err);
+            console.error("Fallo al cargar tickets:", err);
+            tableBody.innerHTML = '<tr><td colspan="5">Error conectando con la base de datos...</td></tr>';
         }
     };
 
-    // Evento para crear ticket con ruta RELATIVA
+    // Crear nuevo ticket
     ticketForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const nuevoTicket = {
@@ -38,18 +39,21 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         try {
-            await fetch('./api/tickets', {
+            const res = await fetch('api/tickets', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(nuevoTicket)
             });
 
-            ticketForm.reset();
-            fetchTickets();
+            if (res.ok) {
+                ticketForm.reset();
+                fetchTickets(); // Recargar la tabla
+            }
         } catch (err) {
-            console.error("Error al crear ticket:", err);
+            console.error("Error al crear el ticket:", err);
         }
     });
 
+    // Carga inicial
     fetchTickets();
 });
