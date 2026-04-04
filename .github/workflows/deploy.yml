@@ -94,7 +94,7 @@ jobs:
           # Actualizar el Backend de APIM
           az apim api update \
             --resource-group rg-k8s-lab \
-            --service-name apimcarlos69lm \
+            --service-name apimcarlos69lmv2 \
             --api-id tickets-api \
             --service-url "http://$NGINX_IP"
           
