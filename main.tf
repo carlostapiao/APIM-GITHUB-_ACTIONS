@@ -105,7 +105,6 @@ resource "azurerm_api_management_api" "api" {
   protocols           = ["http", "https"]
 }
 
-# 1. ESTA ES LA CLAVE: Captura TODO (HTML, CSS, JS)
 resource "azurerm_api_management_api_operation" "wildcard" {
   operation_id        = "all-content"
   api_name            = azurerm_api_management_api.api.name
@@ -113,7 +112,15 @@ resource "azurerm_api_management_api_operation" "wildcard" {
   resource_group_name = azurerm_resource_group.rg.name
   display_name        = "Todo el contenido"
   method              = "GET"
-  url_template        = "/*" # El asterisco permite que /style.css y /script.js pasen
+  
+  # Esta es la sintaxis correcta para "Wildcards" en Azure APIM vía API/Terraform
+  url_template        = "/{*path}" 
+
+  template_parameter {
+    name     = "path"
+    type     = "string"
+    required = false # No es obligatorio que haya algo después de la barra
+  }
 }
 
 # 2. Específico para la API de lectura
